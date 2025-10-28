@@ -4,16 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Result Management Dashboard</title>
-    <!-- Chosen Palette: Light Neutral -->
-    <!-- Application Structure Plan: The application is designed as a task-oriented dashboard SPA with three primary views: a main Dashboard for high-level analytics, a Student Management view for detailed exploration and data entry, and a Course Management view. This structure was chosen over a direct representation of the API endpoints because it provides a more intuitive and user-centric workflow. Users can start with a broad overview (grade distributions, total counts) and then drill down into specific student details or manage course data, which is a more natural flow for an administrative application. -->
-    <!-- Visualization & Content Choices: 
-        - Overall Stats (Students, Courses, Avg Score): Goal=Inform -> Presentation=Dynamic Stat Cards -> Interaction=Updates on data change -> Justification=Provides a quick, scannable overview of the system's scale. (HTML/CSS)
-        - Grade Distribution: Goal=Compare Proportions -> Presentation=Donut Chart -> Interaction=Hover tooltips show counts -> Justification=Effectively shows the ratio of different grades across all results. (Chart.js/Canvas)
-        - Student List: Goal=Organize & Select -> Presentation=Interactive Table -> Interaction=Search, Sort, Row Click -> Justification=Standard and effective UI for managing lists of data. (HTML/JS)
-        - Individual Student Performance: Goal=Compare -> Presentation=Bar Chart -> Interaction=Updates on student selection -> Justification=Clearly compares a single student's scores across multiple courses. (Chart.js/Canvas)
-        - Data Entry: Goal=Inform/Organize -> Presentation=Modals with Forms -> Interaction=Form submission -> Justification=Keeps the main interface clean while providing necessary data management functionality. (HTML/JS)
-    -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -106,16 +96,16 @@
                             <h3 class="text-slate-500 text-sm font-medium">Average Score</h3>
                             <p id="average-score" class="text-3xl font-bold mt-2">0.00</p>
                         </div>
-                         <div class="bg-white p-6 rounded-lg shadow-md">
+                        <div class="bg-white p-6 rounded-lg shadow-md">
                             <h3 class="text-slate-500 text-sm font-medium">Passing Rate</h3>
                             <p id="passing-rate" class="text-3xl font-bold mt-2">0%</p>
                         </div>
                     </div>
                     
                     <div class="bg-white p-6 rounded-lg shadow-md">
-                         <h3 class="text-xl font-semibold mb-4 text-center">Grade Distribution</h3>
-                         <p class="text-center text-slate-500 mb-4">This chart provides an overview of the distribution of grades across all recorded results, offering a quick insight into the overall academic performance.</p>
-                         <div class="chart-container">
+                        <h3 class="text-xl font-semibold mb-4 text-center">Grade Distribution</h3>
+                        <p class="text-center text-slate-500 mb-4">This chart provides an overview of the distribution of grades across all recorded results, offering a quick insight into the overall academic performance.</p>
+                        <div class="chart-container">
                             <canvas id="grade-distribution-chart"></canvas>
                         </div>
                     </div>
@@ -147,7 +137,7 @@
 
                     <div id="student-details-container" class="mt-8 bg-white p-6 rounded-lg shadow-md hidden">
                         <h3 class="text-2xl font-bold mb-4" id="student-details-name"></h3>
-                         <p class="text-slate-500 mb-6">Below are the details and academic performance for the selected student. The chart visualizes their scores across different courses, making it easy to identify strengths and areas for improvement.</p>
+                        <p class="text-slate-500 mb-6">Below are the details and academic performance for the selected student. The chart visualizes their scores across different courses, making it easy to identify strengths and areas for improvement.</p>
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div>
                                 <h4 class="font-semibold text-lg mb-2">Student Information</h4>
@@ -171,7 +161,7 @@
                             <button id="add-course-btn" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700 transition">Add New Course</button>
                         </div>
                         <ul id="course-list" class="space-y-4">
-                           <!-- Courses will be injected here -->
+                            <!-- Courses will be injected here -->
                         </ul>
                     </div>
                 </section>
@@ -208,7 +198,7 @@
         </div>
     </div>
     
-     <!-- Modal for adding course -->
+    <!-- Modal for adding course -->
     <div id="course-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
         <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
             <h2 class="text-2xl font-bold mb-6">Add New Course</h2>
@@ -235,32 +225,18 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // --- MOCK DATA ---
-    let students = [
-        { id: 1, first_name: "John", last_name: "Doe", student_id: "S001", date_of_birth: "2002-05-15" },
-        { id: 2, first_name: "Jane", last_name: "Smith", student_id: "S002", date_of_birth: "2003-01-20" },
-        { id: 3, first_name: "Peter", last_name: "Jones", student_id: "S003", date_of_birth: "2002-11-30" },
-        { id: 4, first_name: "Mary", last_name: "Williams", student_id: "S004", date_of_birth: "2003-03-10" },
-    ];
+    // --- API CONNECTION CONSTANT ---
+    // Change this to your backend server's URL. For example, "http://localhost:3000".
+    const API_BASE_URL = 'http://127.0.0.1:8000/api'; 
+    
+    // --- GLOBAL DATA STORAGE ---
+    let allStudents = [];
+    let allCourses = [];
+    let allResults = [];
 
-    let courses = [
-        { id: 1, name: "Introduction to Python", code: "CS101", description: "Basics of Python programming." },
-        { id: 2, name: "Data Structures", code: "CS201", description: "Fundamental data structures." },
-        { id: 3, name: "Database Systems", code: "CS301", description: "Introduction to databases and SQL." },
-        { id: 4, name: "Web Development", code: "CS305", description: "Building web applications." },
-    ];
-
-    let results = [
-        { id: 1, student: 1, course: 1, score: 85.50, grade: "A" },
-        { id: 2, student: 1, course: 2, score: 92.00, grade: "A+" },
-        { id: 3, student: 2, course: 1, score: 78.00, grade: "B+" },
-        { id: 4, student: 2, course: 3, score: 65.00, grade: "C" },
-        { id: 5, student: 3, course: 2, score: 45.00, grade: "F" },
-        { id: 6, student: 3, course: 4, score: 88.00, grade: "A" },
-        { id: 7, student: 4, course: 1, score: 95.00, grade: "A+" },
-        { id: 8, student: 4, course: 3, score: 72.00, grade: "B" },
-        { id: 9, student: 4, course: 4, score: 81.00, grade: "A-" },
-    ];
+    // --- CHART INSTANCES ---
+    let gradeChart = null;
+    let performanceChart = null;
 
     // --- STATE MANAGEMENT ---
     let appState = {
@@ -270,11 +246,94 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedStudent: null,
     };
     
-    // --- CHART INSTANCES ---
-    let gradeChart = null;
-    let performanceChart = null;
+    // --- API CALLS ---
+    async function fetchStudents() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/students`);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching students:', error);
+            // Returning an empty array to prevent the app from crashing
+            return [];
+        }
+    }
 
-    // --- RENDERING FUNCTIONS ---
+    async function fetchCourses() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/courses`);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching courses:', error);
+            // Returning an empty array to prevent the app from crashing
+            return [];
+        }
+    }
+
+    async function createStudent(studentData) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/students`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(studentData)
+            });
+            if (!response.ok) {
+                throw new Error('Failed to create student');
+            }
+            const newStudent = await response.json();
+            console.log('New student created:', newStudent);
+            return newStudent;
+        } catch (error) {
+            console.error('Error creating student:', error);
+            // Returning null or throwing an error to indicate failure
+            return null;
+        }
+    }
+    
+    async function createCourse(courseData) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/courses`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(courseData)
+            });
+            if (!response.ok) {
+                throw new Error('Failed to create course');
+            }
+            const newCourse = await response.json();
+            console.log('New course created:', newCourse);
+            return newCourse;
+        } catch (error) {
+            console.error('Error creating course:', error);
+            // Returning null or throwing an error to indicate failure
+            return null;
+        }
+    }
+
+    // --- DATA HANDLING AND RENDERING ---
+    async function fetchDataAndRender() {
+        console.log('Fetching data...');
+        allStudents = await fetchStudents();
+        allCourses = await fetchCourses();
+        
+        // Flatten all results from students into a single array for dashboard stats
+        allResults = allStudents.flatMap(s => s.results || []);
+        
+        renderDashboard();
+        renderStudentTable();
+        renderCourseList();
+        console.log('Data fetched and rendered successfully.');
+    }
+
     function renderAll() {
         renderDashboard();
         renderStudentTable();
@@ -282,23 +341,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderDashboard() {
-        document.getElementById('total-students').textContent = students.length;
-        document.getElementById('total-courses').textContent = courses.length;
+        document.getElementById('total-students').textContent = allStudents.length;
+        document.getElementById('total-courses').textContent = allCourses.length;
 
-        const totalScore = results.reduce((sum, r) => sum + parseFloat(r.score), 0);
-        const avgScore = results.length > 0 ? (totalScore / results.length).toFixed(2) : '0.00';
+        const totalScore = allResults.reduce((sum, r) => sum + parseFloat(r.score), 0);
+        const avgScore = allResults.length > 0 ? (totalScore / allResults.length).toFixed(2) : '0.00';
         document.getElementById('average-score').textContent = avgScore;
         
         const passingScore = 50;
-        const passingCount = results.filter(r => r.score >= passingScore).length;
-        const passingRate = results.length > 0 ? ((passingCount / results.length) * 100).toFixed(0) : 0;
+        const passingCount = allResults.filter(r => r.score >= passingScore).length;
+        const passingRate = allResults.length > 0 ? ((passingCount / allResults.length) * 100).toFixed(0) : 0;
         document.getElementById('passing-rate').textContent = `${passingRate}%`;
 
         renderGradeDistributionChart();
     }
     
     function renderGradeDistributionChart() {
-        const gradeCounts = results.reduce((acc, r) => {
+        const gradeCounts = allResults.reduce((acc, r) => {
             acc[r.grade] = (acc[r.grade] || 0) + 1;
             return acc;
         }, {});
@@ -345,7 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderStudentTable() {
         const searchTerm = document.getElementById('student-search').value.toLowerCase();
-        const filteredStudents = students.filter(s =>
+        const filteredStudents = allStudents.filter(s =>
             s.first_name.toLowerCase().includes(searchTerm) ||
             s.last_name.toLowerCase().includes(searchTerm) ||
             s.student_id.toLowerCase().includes(searchTerm)
@@ -366,20 +425,19 @@ document.addEventListener('DOMContentLoaded', () => {
             </tr>
         `).join('');
 
-        // Re-attach event listeners
         document.querySelectorAll('#student-table-body tr').forEach(row => {
             row.addEventListener('click', () => handleStudentSelect(row.dataset.studentId));
         });
     }
     
     function renderStudentDetails(studentId) {
-        const student = students.find(s => s.id == studentId);
+        const student = allStudents.find(s => s.id == studentId);
         if (!student) return;
 
         appState.selectedStudent = student;
-        const studentResults = results.filter(r => r.student == studentId).map(r => ({
+        const studentResults = student.results.map(r => ({
             ...r,
-            courseName: courses.find(c => c.id == r.course)?.name || 'Unknown Course'
+            courseName: allCourses.find(c => c.id == r.course)?.name || 'Unknown Course'
         }));
 
         document.getElementById('student-details-name').textContent = `${student.first_name} ${student.last_name}`;
@@ -428,14 +486,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderCourseList() {
         const courseList = document.getElementById('course-list');
-        courseList.innerHTML = courses.map(course => `
+        courseList.innerHTML = allCourses.map(course => `
             <li class="p-4 border rounded-md">
                 <h4 class="font-bold text-lg">${course.name} (${course.code})</h4>
                 <p class="text-slate-600">${course.description}</p>
             </li>
         `).join('');
     }
-
 
     // --- EVENT HANDLERS ---
     function handleNavigation(e) {
@@ -469,7 +526,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderStudentTable();
     }
     
-    // Modals
     const studentModal = document.getElementById('student-modal');
     const courseModal = document.getElementById('course-modal');
 
@@ -478,34 +534,35 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('add-course-btn').addEventListener('click', () => courseModal.classList.remove('hidden'));
     document.getElementById('cancel-course-modal').addEventListener('click', () => courseModal.classList.add('hidden'));
 
-    // Forms
-    document.getElementById('student-form').addEventListener('submit', (e) => {
+    document.getElementById('student-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const newStudent = {
-            id: students.length + 1,
+        const studentData = {
             first_name: document.getElementById('first_name').value,
             last_name: document.getElementById('last_name').value,
             student_id: document.getElementById('student_id').value,
             date_of_birth: document.getElementById('date_of_birth').value
         };
-        students.push(newStudent);
-        renderAll();
-        studentModal.classList.add('hidden');
-        e.target.reset();
+        const newStudent = await createStudent(studentData);
+        if (newStudent) {
+            studentModal.classList.add('hidden');
+            e.target.reset();
+            await fetchDataAndRender(); // Re-fetch all data to update the UI
+        }
     });
     
-    document.getElementById('course-form').addEventListener('submit', (e) => {
+    document.getElementById('course-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const newCourse = {
-            id: courses.length + 1,
+        const courseData = {
             name: document.getElementById('course_name').value,
             code: document.getElementById('course_code').value,
             description: document.getElementById('course_description').value,
         };
-        courses.push(newCourse);
-        renderAll();
-        courseModal.classList.add('hidden');
-        e.target.reset();
+        const newCourse = await createCourse(courseData);
+        if (newCourse) {
+            courseModal.classList.add('hidden');
+            e.target.reset();
+            await fetchDataAndRender(); // Re-fetch all data to update the UI
+        }
     });
     
 
@@ -514,7 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('student-search').addEventListener('input', renderStudentTable);
     document.querySelector('#students-section thead').addEventListener('click', handleSort);
     
-    renderAll();
+    fetchDataAndRender();
 });
 </script>
 </body>
